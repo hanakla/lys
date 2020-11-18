@@ -1,0 +1,32 @@
+{
+  "name": "@fleur/lys-testing",
+  "version": "0.0.0",
+  "description": "lys is an micro statement manager for react",
+  "main": "index.js",
+  "repository": "https://github.com/fleur-js/lys",
+  "author": "Hanakla <ragg.devpr@gmail.com>",
+  "license": "MIT",
+  "sideEffects": false,
+  "scripts": {
+    "test": "jest -u"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^11.1.2",
+    "@testing-library/react-hooks": "^3.4.2",
+    "@types/react": "^16.9.56",
+    "@types/react-dom": "^16.9.9",
+    "bili": "^5.0.5",
+    "jest": "^26.6.3",
+    "prettier": "^2.1.2",
+    "rollup-plugin-typescript2": "^0.29.0",
+    "ts-jest": "^26.4.4",
+    "typescript": "^4.0.5"
+  },
+  "dependencies": {
+    "immer": "^7.0.14"
+  },
+  "peerDependencies": {
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1"
+  }
+}
