@@ -1,6 +1,6 @@
 import { useCallback, useContext, useMemo, useReducer, useRef } from "react";
 import { createDraft, finishDraft } from "immer";
-import { InternalLysContext } from "./context";
+import { LysReactContext } from "./context";
 import { IS_SERVER, useIsomorphicLayoutEffect } from "./utils";
 import { VolatileReactContext } from "./VolatileContext";
 
@@ -34,7 +34,7 @@ export const createVolatileSlice = <S, VDef extends VolatileSliceDefinition<S>>(
 };
 
 const useVolatileContext = () => {
-  const lysContext = useContext(InternalLysContext);
+  const lysContext = useContext(LysReactContext);
   const volatileContext =
     lysContext?.volatileContext ?? useContext(VolatileReactContext);
 

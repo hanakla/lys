@@ -1,5 +1,5 @@
-export { createSlice } from "./slice";
-export { LysProvider, createLysContext } from "./context";
+export { createSlice, Slice, SliceMeta, StateOfSlice } from "./slice";
+export { LysProvider, createLysContext, LysContext } from "./context";
 // export { useFetch } from "./useFetch";
 export { VolatileProvider } from "./VolatileContext";
 export {

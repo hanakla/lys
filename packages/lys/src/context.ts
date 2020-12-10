@@ -75,15 +75,15 @@ export class LysContext {
   }
 }
 
-export const InternalLysContext = createContext<LysContext | null>(null);
-InternalLysContext.displayName = "LysContext";
+export const LysReactContext = createContext<LysContext | null>(null);
+LysReactContext.displayName = "LysContext";
 
 export const createLysContext = () => {
   return new LysContext();
 };
 
 export const useLysContext = () => {
-  const context = useContext(InternalLysContext);
+  const context = useContext(LysReactContext);
 
   if (!context) {
     throw new Error("LysContext must be placed of top of useLysContext");
@@ -92,4 +92,4 @@ export const useLysContext = () => {
   return context;
 };
 
-export const LysProvider = InternalLysContext.Provider;
+export const LysProvider = LysReactContext.Provider;

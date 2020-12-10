@@ -8,7 +8,8 @@
   "license": "MIT",
   "sideEffects": false,
   "scripts": {
-    "test": "jest -u"
+    "test": "jest -u",
+    "prepublishOnly": "rm -rf ./dist && tsc --emitDeclarationOnly --declaration --outDir ./dist && bili"
   },
   "devDependencies": {
     "@testing-library/react": "^11.1.2",
