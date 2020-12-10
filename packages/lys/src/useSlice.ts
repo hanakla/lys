@@ -1,6 +1,6 @@
 import { useCallback, useReducer, useRef } from "react";
 import { useLysContext } from "./context";
-import { Slice, SliceMeta, StateOfSlice } from "./slice";
+import { SliceMeta, StateOfSlice } from "./slice";
 
 export type SliceSelector = (context: {
   get: <S extends SliceMeta<any>>(slice: S) => StateOfSlice<S>;

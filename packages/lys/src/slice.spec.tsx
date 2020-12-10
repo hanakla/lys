@@ -3,7 +3,7 @@ import { createSlice } from "./slice";
 
 describe("slice", () => {
   const slice = createSlice("slice", () => ({ count: 0, executed: false }), {
-    increment({ state }, amount: number = 1) {
+    increment({ state, get }, amount: number = 1) {
       state.count += amount;
     },
     decrement({ state }, amount: number = 1) {

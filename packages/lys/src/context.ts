@@ -2,21 +2,25 @@ import { createDraft, finishDraft } from "immer";
 import { createContext, useContext } from "react";
 import { Action, ArgsOfAction, SliceMeta, StateOfSlice } from "./slice";
 import { Slice } from "./slice";
+import { VolatileContext } from "./VolatileContext";
 
 export class LysContext {
   private slices = new Map<string, Slice<any>>();
   private sliceStates = new Map<string, any>();
   private observers = new Map<string, Set<any>>();
+  private currentDraft = new Map<Slice<any>, any>();
+  public readonly volatileContext = new VolatileContext();
 
-  public execAction = async <T extends Action<any>>(
+  public execSelector = async <T extends Action<any>>(
     action: T,
     ...args: ArgsOfAction<T>
   ): Promise<void> => {
     const slice = this.getOrMountSlice(action.__$slice);
     const state = this.sliceStates.get(slice.__$sliceKey);
-    const draft = createDraft(state);
+    const draft = this.currentDraft.get(slice) ?? createDraft(state);
+    this.currentDraft.set(slice, draft);
 
-    await action({ get: this.execAction, state: draft }, ...(args as any[]));
+    await action({ get: this.execSelector, state: draft }, ...(args as any[]));
 
     this.sliceStates.set(slice.__$sliceKey, finishDraft(draft));
     this.observers.get(slice.__$sliceKey)?.forEach((observer) => observer());
@@ -71,7 +75,8 @@ export class LysContext {
   }
 }
 
-const InternalLysContext = createContext<LysContext | null>(null);
+export const InternalLysContext = createContext<LysContext | null>(null);
+InternalLysContext.displayName = "LysContext";
 
 export const createLysContext = () => {
   return new LysContext();
@@ -87,4 +92,4 @@ export const useLysContext = () => {
   return context;
 };
 
-export const LysContextProvider = InternalLysContext.Provider;
+export const LysProvider = InternalLysContext.Provider;
