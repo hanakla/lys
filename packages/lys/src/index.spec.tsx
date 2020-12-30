@@ -37,7 +37,7 @@ describe("lys", () => {
 
     const ref = createRef<SliceToActions<typeof formSlice>>();
     const { container } = render(
-      <LysContext value={context}>
+      <LysContext>
         <Component ref={ref} />
       </LysContext>
     );

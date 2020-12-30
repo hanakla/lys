@@ -1,5 +1,5 @@
 import { Draft } from "immer";
-import { createContext, useContext } from "react";
+import React, { createContext, useContext, useMemo } from "react";
 import { ObjectPatcher } from "./patchObject";
 import { instantiateSlice, Slice, SliceInstance, StateOfSlice } from "./slice";
 
@@ -68,4 +68,12 @@ export const useLysContext = () => {
   return context;
 };
 
-export const LysProvider = LysReactContext.Provider;
+export const LysProvider: React.FC = ({ children }) => {
+  const context = useMemo(() => createLysContext(), []);
+
+  return (
+    <LysReactContext.Provider value={context}>
+      {children}
+    </LysReactContext.Provider>
+  );
+};

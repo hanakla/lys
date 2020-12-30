@@ -13,7 +13,7 @@ import { useLysSliceRoot, useLysSlice } from "./useSlice";
 
 describe("useLysSlice", () => {
   const App: React.FC<{ context: LysContext }> = ({ children, context }) => (
-    <LysProvider value={context}>{children}</LysProvider>
+    <LysProvider>{children}</LysProvider>
   );
 
   beforeEach(() => {
