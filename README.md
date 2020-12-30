@@ -1,5 +1,5 @@
 # Lys
-Lys (risu) is minimal statement manger for '21s React.
+Lys (risu) is an minimal statement manger for '21s React.
 
 It's focus to **Per page state management**, not application global state management.  
 Lys is usable to instead of `useReducer`, `Mobx`, or `Recoil` if you have async procedure.
