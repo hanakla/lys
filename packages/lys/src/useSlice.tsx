@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-} from "react";
+import { useCallback, useContext, useMemo, useReducer, useRef } from "react";
 import { Draft } from "immer";
 import { Slice, StateOfSlice } from "./slice";
 import { LysReactContext } from "./LysContext";
@@ -110,7 +103,7 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
     return () => lysContext.unobserveSliceUpdate(slice);
   }, [slice]);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (initialStateLoaded.current || initialState == null) {
       return;
     }
