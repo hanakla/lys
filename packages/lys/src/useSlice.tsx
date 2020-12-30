@@ -76,7 +76,9 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
     isRoot &&
     lysContext.hasSliceInstance(slice)
   ) {
-    throw new Error("Lys: Slice is already initalized in upper tree");
+    console.warn(
+      "Lys: Slice is already initalized in upper tree. Ignore this if you are using StrictMode"
+    );
   }
 
   const [, rerender] = useReducer((s) => s + 1, 0);
@@ -96,8 +98,6 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
   }, []);
 
   useIsomorphicLayoutEffect(() => {
-    isFirstRendering.current = false;
-
     // Observe update only in root
     if (!isRoot) return;
 
@@ -114,6 +114,7 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
     initialStateLoaded.current = true;
   }, [initialState]);
 
+  isFirstRendering.current = false;
   return [instance.state.current, instance.actions] as const;
 };
 
