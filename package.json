@@ -23,7 +23,7 @@
       "git add ./packages/lys/README.md"
     ],
     "*.{ts,tsx}": [
-      "tslint --fix",
+      "eslint --fix",
       "prettier --write",
       "git add"
     ]
