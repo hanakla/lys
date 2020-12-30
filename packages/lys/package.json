@@ -1,6 +1,6 @@
 {
   "name": "@fleur/lys",
-  "version": "0.0.0",
+  "version": "1.0.0-dev.6",
   "description": "lys is an micro statement manager for '21s react",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -10,8 +10,11 @@
   "license": "MIT",
   "sideEffects": false,
   "scripts": {
-    "test": "jest -u",
-    "prepublishOnly": "rm -rf ./dist && tsc --emitDeclarationOnly --declaration --outDir ./dist && bili"
+    "test": "jest",
+    "build:watch": "bili -w",
+    "build:declaration": "tsc --emitDeclarationOnly --declaration --outDir ./dist",
+    "build": "bili",
+    "prepublishOnly": "rm -rf ./dist && yarn build:declaration && yarn build"
   },
   "devDependencies": {
     "@testing-library/react": "^11.1.2",

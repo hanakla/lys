@@ -1,10 +1,8 @@
 # Lys
 Lys (risu) is minimal statement manger for '21s React.
 
-It's focus to **Per page state management**, not application global state management.  
+It's focus to **Per page state management**, not application global state management.
 Lys is usable to instead of `useReducer`, `Mobx`, or `Recoil` if you have async procedure.
-
-See [CodeSandbox Example](https://codesandbox.io/s/fleur-lys-official-example-ok533?file=/src/App.js)
 
 ```
 yarn add @fleur/lys
@@ -26,8 +24,6 @@ yarn add @fleur/lys
 
 
 ## Usage
-
-Summary in [CodeSandbox Example](https://codesandbox.io/s/fleur-lys-official-example-ok533?file=/src/App.js).
 
 First, define your slice.
 
@@ -156,4 +152,5 @@ describe('Testing slice', () => {
     expect(state.current.count).toBe(1)
   })
 })
+
 ```
