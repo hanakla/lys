@@ -66,21 +66,21 @@ const useLysContext = () => {
 const useLysSliceInternal = <S extends Slice<any, any>>(
   slice: S,
   initialState?: ObjectPatcher<Draft<StateOfSlice<S>>> | null,
-  { initialize = true }: { initialize?: boolean } = {}
+  { isRoot = true }: { isRoot?: boolean } = {}
 ) => {
   const lysContext = useLysContext();
   const isFirstRendering = useRef(true);
   const initialStateLoaded = useRef(initialState != null);
 
-  if (!initialize && !lysContext.hasSliceInstance(slice)) {
+  if (!isRoot && !lysContext.hasSliceInstance(slice)) {
     throw new Error(
       `Lys: Slice must be initialized in upper tree Component with \`useLysSliceRoot(slice)\``
     );
   }
 
   if (
-    isFirstRendering.current &&
-    initialize &&
+    !isFirstRendering.current &&
+    isRoot &&
     lysContext.hasSliceInstance(slice)
   ) {
     throw new Error("Lys: Slice is already initalized in upper tree");
@@ -104,7 +104,7 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
 
   useIsomorphicLayoutEffect(() => {
     // Observe update only in root
-    if (!initialize) return;
+    if (!isRoot) return;
 
     lysContext.observeSliceUpdate(slice, checkAndRerender);
     return () => lysContext.unobserveSliceUpdate(slice);
@@ -127,9 +127,9 @@ export const useLysSliceRoot = <S extends Slice<any, any>>(
   slice: S,
   initialState?: ObjectPatcher<Draft<StateOfSlice<S>>>
 ) => {
-  return useLysSliceInternal(slice, initialState, { initialize: true });
+  return useLysSliceInternal(slice, initialState, { isRoot: true });
 };
 
 export const useLysSlice = <S extends Slice<any, any>>(slice: S) => {
-  return useLysSliceInternal(slice, null, { initialize: false });
+  return useLysSliceInternal(slice, null, { isRoot: false });
 };
