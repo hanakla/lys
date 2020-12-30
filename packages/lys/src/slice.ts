@@ -1,65 +1,119 @@
-import { Draft } from "immer";
+import { createDraft, Draft, finishDraft } from "immer";
+import { ObjectPatcher, patchObject } from "./patchObject";
 
-type SliceContext<S> = {
-  state: Draft<S>;
-  get<T extends Action<any>>(action: T, ...args: ArgsOfAction<T>): Promise<any>;
+export type SliceDefinition<State> = {
+  [K: string]: SliceAction<State>;
 };
 
-type SliceDefinition<State> = {
-  [actionName: string]: ActionDef<State>;
+export type SliceAction<State> = {
+  (
+    context: {
+      draft: Draft<State>;
+      /**
+       * Update state and emit changes temporary.
+       */
+      updateTemporary: (patcher: ObjectPatcher<Draft<State>>) => void;
+    },
+    ...args: any[]
+  ): void | Promise<void>;
 };
 
-type ActionDef<State> = (
-  context: SliceContext<State>,
-  ...args: any[]
-) => any | Promise<any>;
+export type Slice<State, Def extends SliceDefinition<any>> = {
+  initialStateFactory: () => State;
+  actions: Def;
+};
 
-// prettier-ignore
-export type StateOfSlice<
-  T
-> = T extends SliceDefinition<infer S> ? S
-  : T extends SliceMeta<infer R>　? (R extends SliceDefinition<infer S> ? S : never)
+export type StateOfSlice<T extends Slice<any, any>> = T extends Slice<
+  infer State,
+  any
+>
+  ? State
   : never;
 
-export interface Action<Args extends unknown[]> {
-  (context: SliceContext<any>, ...args: Args): any | Promise<any>;
-  __$slice: Slice<any>;
-}
+export type SliceInstance<S extends Slice<any, any>> = {
+  state: { readonly current: StateOfSlice<S> };
+  actions: SliceToActions<S>;
+};
 
-export interface SliceMeta<SliceDef extends SliceDefinition<any>> {
-  readonly __$stateFactory: () => StateOfSlice<SliceDef>;
-  readonly __$sliceKey: string;
-}
+export type SliceToActions<S extends Slice<any, any>> = {
+  [K in keyof S["actions"]]: S["actions"][K] extends (
+    draft: any,
+    ...args: infer R
+  ) => void | Promise<void>
+    ? (...args: R) => void | Promise<void>
+    : never;
+} & {
+  set(applier: ObjectPatcher<Draft<StateOfSlice<S>>>): void;
+  reset(k?: keyof StateOfSlice<S>): void;
+};
 
-export type Slice<SliceDef extends SliceDefinition<any>> = SliceMeta<SliceDef> &
-  {
-    [K in keyof SliceDef]: Action<ArgsOfAction<SliceDef[K]>>;
+export const createSlice = <S, VDef extends SliceDefinition<S>>(
+  actions: VDef,
+  initialStateFactory: () => S
+): Slice<S, VDef> => {
+  return { initialStateFactory, actions };
+};
+
+export const instantiateSlice = <S extends Slice<any, any>>(
+  slice: S,
+  initialState?: ObjectPatcher<Draft<StateOfSlice<S>>> | null,
+  changed?: (state: StateOfSlice<S>) => void
+): SliceInstance<S> => {
+  const baseInitial = slice.initialStateFactory();
+  const initial = initialState
+    ? patchObject(baseInitial, initialState)
+    : baseInitial;
+
+  const state = {
+    current: initial,
   };
 
-export type ArgsOfAction<T> = T extends (
-  context: SliceContext<any>,
-  ...args: infer R
-) => void | Promise<void>
-  ? R
-  : never;
+  const execAction = async (action: SliceAction<any>, ...args: any[]) => {
+    const base = state.current;
+    const draft = createDraft(base);
 
-export const createSlice = <State, Def extends SliceDefinition<State>>(
-  key: string,
-  initialStateFactory: () => State,
-  defs: Def
-): Slice<Def> => {
-  const slice: Slice<Def> = {
-    __$sliceKey: key,
-    __$stateFactory: initialStateFactory,
-  } as any;
+    const updateTemporary = (
+      patcher: ObjectPatcher<Draft<StateOfSlice<any>>>
+    ) => {
+      const tmpDraft = createDraft(base);
+      patchObject(tmpDraft, patcher);
 
-  Object.keys(defs).forEach((key) => {
-    const action = defs[key] as Action<any>;
-    action.__$slice = slice;
+      // Won't do this. When use destructive assignment by draft
+      // destructed property is not update and desync from base draft, it makes confusing
+      // // patchObject(draft, patcher);
 
-    // 循環参照になりそうだけど、実行時にたかだかSlice数しか実行されないはずなので許容する
-    slice[key as keyof Def] = action as any;
+      const nextState = finishDraft(tmpDraft);
+      state.current = nextState;
+      changed?.(nextState);
+    };
+
+    const result = action({ draft, updateTemporary }, ...args);
+
+    if (result instanceof Promise) {
+      await result;
+    }
+
+    const nextState = finishDraft(draft);
+    state.current = nextState;
+    changed?.(nextState);
+  };
+
+  const proxyActions: any = {};
+  Object.keys(slice.actions).forEach((key) => {
+    proxyActions[key] = (...args: any) => {
+      execAction(slice.actions[key], ...args);
+    };
   });
 
-  return slice;
+  (proxyActions as SliceToActions<S>).set = (patcher) => {
+    execAction(({ draft }) => patchObject(draft, patcher));
+  };
+  (proxyActions as SliceToActions<S>).reset = (k?) => {
+    execAction(({ draft }) => {
+      const initial = slice.initialStateFactory();
+      Object.assign(draft, k != null ? { [k]: initial[k] } : initial);
+    });
+  };
+
+  return { state, actions: proxyActions };
 };

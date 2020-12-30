@@ -1,31 +1,65 @@
-import React from "react";
+import React, { createRef, forwardRef, useImperativeHandle } from "react";
 import { render } from "@testing-library/react";
-import { useCallback } from "react";
-import { createLysContext, createSlice, LysContext } from "./index";
+import { createLysContext, LysContext, createSlice, useLysSliceRoot } from "./";
+import { SliceToActions } from "./slice";
+import { act } from "react-dom/test-utils";
 
-const slice = createSlice("slice", () => ({ flag: false }), {
-  getUser() {},
-});
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe("lys", () => {
-  describe("", () => {
-    const Component = () => {
-      // const ctx = useLys();
+  const formSlice = createSlice(
+    {
+      async submit({ draft, updateTemporary }) {
+        updateTemporary((draft) => {
+          draft.status.loading = true;
+        });
 
-      const handle = useCallback(() => {
-        // ctx.execAction();
-      }, []);
+        await wait(1000);
 
-      return <div onClick={handle} />;
-    };
+        draft.status.loading = false;
+        draft.status.submitted = true;
+      },
+    },
+    () => ({
+      status: { loading: false, submitted: false },
+    })
+  );
 
-    it("render", () => {
-      const context = createLysContext();
-      const result = render(
-        <LysContext value={context}>
-          <Component />
-        </LysContext>
-      );
+  const Component = forwardRef<SliceToActions<typeof formSlice>>((_, ref) => {
+    const [state, actions] = useLysSliceRoot(formSlice);
+
+    useImperativeHandle(ref, () => actions, []);
+    return <>{JSON.stringify(state)}</>;
+  });
+
+  it("render", async () => {
+    const context = createLysContext();
+
+    const ref = createRef<SliceToActions<typeof formSlice>>();
+    const { container } = render(
+      <LysContext value={context}>
+        <Component ref={ref} />
+      </LysContext>
+    );
+
+    // Should display initial state
+    expect(JSON.parse(container.textContent).status).toMatchObject({
+      loading: false,
+      submitted: false,
+    });
+
+    // Should changeImmidiate changes immidiaty
+    await act(async () => ref.current.submit());
+    expect(JSON.parse(container.textContent).status).toMatchObject({
+      loading: true,
+      submitted: false,
+    });
+
+    // Should apply state of action finished
+    await act(async () => wait(1000));
+    expect(JSON.parse(container.textContent).status).toMatchObject({
+      loading: false,
+      submitted: true,
     });
   });
 });
