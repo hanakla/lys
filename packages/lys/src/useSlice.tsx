@@ -79,7 +79,7 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
   }
 
   if (
-    !isFirstRendering.current &&
+    isFirstRendering.current &&
     isRoot &&
     lysContext.hasSliceInstance(slice)
   ) {
