@@ -96,6 +96,8 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
   }, []);
 
   useIsomorphicLayoutEffect(() => {
+    isFirstRendering.current = false;
+
     // Observe update only in root
     if (!isRoot) return;
 
@@ -112,7 +114,6 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
     initialStateLoaded.current = true;
   }, [initialState]);
 
-  isFirstRendering.current = false;
   return [instance.state.current, instance.actions] as const;
 };
 
