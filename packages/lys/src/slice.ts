@@ -103,7 +103,7 @@ export const instantiateSlice = <S extends Slice<any, any>>(
   const proxyActions: any = {};
   Object.keys(slice.actions).forEach((key) => {
     proxyActions[key] = (...args: any) => {
-      execAction(slice.actions[key], ...args);
+      return execAction(slice.actions[key], ...args);
     };
   });
 
