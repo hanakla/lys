@@ -33,8 +33,6 @@ describe("lys", () => {
   });
 
   it("render", async () => {
-    const context = createLysContext();
-
     const ref = createRef<SliceToActions<typeof formSlice>>();
     const { container } = render(
       <LysContext>
@@ -49,7 +47,9 @@ describe("lys", () => {
     });
 
     // Should changeImmidiate changes immidiaty
-    await act(async () => ref.current.submit());
+    act(() => {
+      ref.current.submit();
+    });
     expect(JSON.parse(container.textContent).status).toMatchObject({
       loading: true,
       submitted: false,
