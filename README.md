@@ -23,8 +23,6 @@ yarn add @fleur/lys
 - Type safe
 - Minimal re-rendering
 
-
-
 ## Usage
 
 Summary in [CodeSandbox Example](https://codesandbox.io/s/fleur-lys-official-example-ok533?file=/src/App.js).

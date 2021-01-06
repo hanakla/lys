@@ -43,7 +43,9 @@ export type SliceToActions<S extends Slice<any, any>> = {
     ? (...args: R) => void | Promise<void>
     : never;
 } & {
+  /** @param applier Shallow merging object or modifier function */
   set(applier: ObjectPatcher<Draft<StateOfSlice<S>>>): void;
+  /** @param k Field name to reset to initial state, no specified to reset all fields */
   reset(k?: keyof StateOfSlice<S>): void;
 };
 
