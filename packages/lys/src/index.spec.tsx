@@ -1,6 +1,6 @@
 import React, { createRef, forwardRef, useImperativeHandle } from "react";
 import { render } from "@testing-library/react";
-import { createLysContext, LysContext, createSlice, useLysSliceRoot } from "./";
+import { LysContext, createSlice, useLysSliceRoot } from "./";
 import { SliceToActions } from "./slice";
 import { act } from "react-dom/test-utils";
 
