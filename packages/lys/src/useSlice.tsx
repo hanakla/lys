@@ -115,7 +115,7 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
   }, [initialState]);
 
   const returnedState = useMemo(
-    () => ({ ...instance.state.current, ...instance.selectors }),
+    () => ({ ...instance.state.current, ...instance.computables }),
     [instance.state.current]
   );
 

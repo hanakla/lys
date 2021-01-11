@@ -16,7 +16,7 @@ describe("slice", () => {
         await wait(1000);
         draft.submitting = false;
       },
-      selectors: {
+      computable: {
         userName: (state) => state.form.name,
         isEditable: (s) => !s.submitting,
       },
@@ -70,10 +70,8 @@ describe("slice", () => {
 
   describe("selector", () => {
     it("should select value", () => {
-      const { state, actions, selectors } = instantiateSlice(slice);
-      console.log(state, actions);
-
-      expect(selectors.isEditable()).toBe(true);
+      const { state, actions, computables } = instantiateSlice(slice);
+      expect(computables.isEditable()).toBe(true);
     });
   });
 

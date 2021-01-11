@@ -5,14 +5,14 @@ import { DeepReadonly } from "./typeutils";
 export type SliceDefinition<State> = {
   [K: string]:
     | SliceAction<State>
-    | { [K: string]: SliceSelector<State> }
+    | { [K: string]: SliceComputable<State> }
     | undefined;
-  selectors?: {
-    [K: string]: SliceSelector<State>;
+  computable?: {
+    [K: string]: SliceComputable<State>;
   };
 };
 
-export type SliceSelector<State> = {
+export type SliceComputable<State> = {
   (state: DeepReadonly<State>): any;
 };
 
@@ -31,8 +31,8 @@ export type SliceAction<State> = {
 
 export type Slice<State, SDef extends SliceDefinition<any>> = {
   initialStateFactory: () => State;
-  actions: Omit<SDef, "selectors">;
-  selectors: { [K: string]: SliceSelector<State> };
+  actions: Omit<SDef, "computable">;
+  computable: { [K: string]: SliceComputable<State> };
 };
 
 export type StateOfSlice<T extends Slice<any, any>> = T extends Slice<
@@ -45,7 +45,7 @@ export type StateOfSlice<T extends Slice<any, any>> = T extends Slice<
 export type SliceInstance<S extends Slice<any, any>> = {
   state: { readonly current: StateOfSlice<S> };
   actions: SliceToActions<S>;
-  selectors: SliceToSelectors<S>;
+  computables: SliceToSelectors<S>;
   dispose: () => void;
 };
 
@@ -64,7 +64,7 @@ export type SliceToActions<S extends Slice<any, any>> = {
 };
 
 export type SliceToSelectors<S extends Slice<any, any>> = {
-  [K in keyof S["selectors"]]: S["selectors"][K] extends (
+  [K in keyof S["computable"]]: S["computable"][K] extends (
     state: any,
     ...args: infer R
   ) => infer Ret
@@ -76,8 +76,8 @@ export const createSlice = <S, VDef extends SliceDefinition<S>>(
   sliceDef: VDef,
   initialStateFactory: () => S
 ): Slice<S, VDef> => {
-  const { selectors = {}, ...actions } = sliceDef;
-  return { initialStateFactory, actions, selectors };
+  const { computable: selectors = {}, ...actions } = sliceDef;
+  return { initialStateFactory, actions, computable: selectors };
 };
 
 export const instantiateSlice = <S extends Slice<any, any>>(
@@ -141,17 +141,17 @@ export const instantiateSlice = <S extends Slice<any, any>>(
     });
   };
 
-  const proxySelectors: any = {};
+  const proxyComputables: any = {};
   let latestState: any = null;
   const selectorCache = new Map();
-  Object.keys(slice.selectors ?? {}).forEach((key) => {
-    proxySelectors[key] = (...args: any) => {
+  Object.keys(slice.computable ?? {}).forEach((key) => {
+    proxyComputables[key] = (...args: any) => {
       if (state.current === latestState) {
-        return selectorCache.get(slice.selectors[key]);
+        return selectorCache.get(slice.computable[key]);
       }
 
-      const result = slice.selectors[key](state.current);
-      selectorCache.set(slice.selectors[key], result);
+      const result = slice.computable[key](state.current);
+      selectorCache.set(slice.computable[key], result);
       return result;
     };
   });
@@ -161,5 +161,10 @@ export const instantiateSlice = <S extends Slice<any, any>>(
     latestState = null;
   };
 
-  return { state, actions: proxyActions, selectors: proxySelectors, dispose };
+  return {
+    state,
+    actions: proxyActions,
+    computables: proxyComputables,
+    dispose,
+  };
 };

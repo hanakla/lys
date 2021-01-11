@@ -26,7 +26,7 @@ describe("useLysSlice", () => {
         increment({ draft }) {
           draft.count++;
         },
-        selectors: {
+        computable: {
           isZero: (state) => state.count === 0,
         },
       },
