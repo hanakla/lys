@@ -26,6 +26,9 @@ describe("useLysSlice", () => {
         increment({ draft }) {
           draft.count++;
         },
+        selectors: {
+          isZero: (state) => state.count === 0,
+        },
       },
       () => ({ count: 0 })
     );
@@ -47,7 +50,9 @@ describe("useLysSlice", () => {
 
       return (
         <div>
-          <div>Root: {state.count}</div>
+          <div>
+            Root: {state.count}(isZero: {state.isZero().toString()})
+          </div>
           <SubComponent ref={subRef} />
         </div>
       );
@@ -77,7 +82,7 @@ describe("useLysSlice", () => {
 
     // Initial State
     expect(result.container.innerHTML).toMatchInlineSnapshot(
-      `"<div><div>Root: 0</div><div>Sub: 0</div></div>"`
+      `"<div><div>Root: 0(isZero: true)</div><div>Sub: 0</div></div>"`
     );
 
     // First update
@@ -88,7 +93,7 @@ describe("useLysSlice", () => {
 
     result.rerender(element);
     expect(result.container.innerHTML).toMatchInlineSnapshot(
-      `"<div><div>Root: 1</div><div>Sub: 1</div></div>"`
+      `"<div><div>Root: 1(isZero: false)</div><div>Sub: 1</div></div>"`
     );
 
     // Second update
@@ -100,7 +105,7 @@ describe("useLysSlice", () => {
 
     result.rerender(element);
     expect(result.container.innerHTML).toMatchInlineSnapshot(
-      `"<div><div>Root: 2</div><div>Sub: 2</div></div>"`
+      `"<div><div>Root: 2(isZero: false)</div><div>Sub: 2</div></div>"`
     );
 
     // Third update by SubComponent
@@ -112,7 +117,7 @@ describe("useLysSlice", () => {
 
     result.rerender(element);
     expect(result.container.innerHTML).toMatchInlineSnapshot(
-      `"<div><div>Root: 3</div><div>Sub: 3</div></div>"`
+      `"<div><div>Root: 3(isZero: false)</div><div>Sub: 3</div></div>"`
     );
   });
 

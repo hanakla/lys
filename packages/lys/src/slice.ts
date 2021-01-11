@@ -1,8 +1,19 @@
 import { createDraft, Draft, finishDraft } from "immer";
 import { ObjectPatcher, patchObject } from "./patchObject";
+import { DeepReadonly } from "./typeutils";
 
 export type SliceDefinition<State> = {
-  [K: string]: SliceAction<State>;
+  [K: string]:
+    | SliceAction<State>
+    | { [K: string]: SliceSelector<State> }
+    | undefined;
+  selectors?: {
+    [K: string]: SliceSelector<State>;
+  };
+};
+
+export type SliceSelector<State> = {
+  (state: DeepReadonly<State>): any;
 };
 
 export type SliceAction<State> = {
@@ -18,9 +29,10 @@ export type SliceAction<State> = {
   ): void | Promise<void>;
 };
 
-export type Slice<State, Def extends SliceDefinition<any>> = {
+export type Slice<State, SDef extends SliceDefinition<any>> = {
   initialStateFactory: () => State;
-  actions: Def;
+  actions: Omit<SDef, "selectors">;
+  selectors: { [K: string]: SliceSelector<State> };
 };
 
 export type StateOfSlice<T extends Slice<any, any>> = T extends Slice<
@@ -33,6 +45,8 @@ export type StateOfSlice<T extends Slice<any, any>> = T extends Slice<
 export type SliceInstance<S extends Slice<any, any>> = {
   state: { readonly current: StateOfSlice<S> };
   actions: SliceToActions<S>;
+  selectors: SliceToSelectors<S>;
+  dispose: () => void;
 };
 
 export type SliceToActions<S extends Slice<any, any>> = {
@@ -49,11 +63,21 @@ export type SliceToActions<S extends Slice<any, any>> = {
   reset(k?: keyof StateOfSlice<S>): void;
 };
 
+export type SliceToSelectors<S extends Slice<any, any>> = {
+  [K in keyof S["selectors"]]: S["selectors"][K] extends (
+    state: any,
+    ...args: infer R
+  ) => infer Ret
+    ? (...args: R) => Ret
+    : never;
+};
+
 export const createSlice = <S, VDef extends SliceDefinition<S>>(
-  actions: VDef,
+  sliceDef: VDef,
   initialStateFactory: () => S
 ): Slice<S, VDef> => {
-  return { initialStateFactory, actions };
+  const { selectors = {}, ...actions } = sliceDef;
+  return { initialStateFactory, actions, selectors };
 };
 
 export const instantiateSlice = <S extends Slice<any, any>>(
@@ -117,5 +141,25 @@ export const instantiateSlice = <S extends Slice<any, any>>(
     });
   };
 
-  return { state, actions: proxyActions };
+  const proxySelectors: any = {};
+  let latestState: any = null;
+  const selectorCache = new Map();
+  Object.keys(slice.selectors ?? {}).forEach((key) => {
+    proxySelectors[key] = (...args: any) => {
+      if (state.current === latestState) {
+        return selectorCache.get(slice.selectors[key]);
+      }
+
+      const result = slice.selectors[key](state.current);
+      selectorCache.set(slice.selectors[key], result);
+      return result;
+    };
+  });
+
+  const dispose = () => {
+    selectorCache.clear();
+    latestState = null;
+  };
+
+  return { state, actions: proxyActions, selectors: proxySelectors, dispose };
 };

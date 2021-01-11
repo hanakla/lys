@@ -114,8 +114,13 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
     initialStateLoaded.current = true;
   }, [initialState]);
 
+  const returnedState = useMemo(
+    () => ({ ...instance.state.current, ...instance.selectors }),
+    [instance.state.current]
+  );
+
   isFirstRendering.current = false;
-  return [instance.state.current, instance.actions] as const;
+  return [returnedState, instance.actions] as const;
 };
 
 export const useLysSliceRoot = <S extends Slice<any, any>>(

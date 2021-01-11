@@ -16,6 +16,10 @@ describe("slice", () => {
         await wait(1000);
         draft.submitting = false;
       },
+      selectors: {
+        userName: (state) => state.form.name,
+        isEditable: (s) => !s.submitting,
+      },
     },
     (): State => ({ submitting: false, form: { name: "" } })
   );
@@ -61,6 +65,15 @@ describe("slice", () => {
         expect(state.current.submitting).toBe(false);
         expect(state.current.form.name).toBe("aaa"); // Expect not to change
       });
+    });
+  });
+
+  describe("selector", () => {
+    it("should select value", () => {
+      const { state, actions, selectors } = instantiateSlice(slice);
+      console.log(state, actions);
+
+      expect(selectors.isEditable()).toBe(true);
     });
   });
 
