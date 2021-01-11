@@ -23,8 +23,10 @@ describe("useLysSlice", () => {
   it("Basic usage: Should intialize, action, action to update state", async () => {
     const slice = createSlice(
       {
-        increment({ draft }) {
-          draft.count++;
+        actions: {
+          increment({ draft }) {
+            draft.count++;
+          },
         },
         computable: {
           isZero: (state) => state.count === 0,
@@ -51,7 +53,7 @@ describe("useLysSlice", () => {
       return (
         <div>
           <div>
-            Root: {state.count}(isZero: {state.isZero().toString()})
+            Root: {state.count}(isZero: {state.isZero.toString()})
           </div>
           <SubComponent ref={subRef} />
         </div>
@@ -124,7 +126,7 @@ describe("useLysSlice", () => {
   describe("With async data fetch", () => {
     it("Should accept fetched data", async () => {
       const context = createLysContext();
-      const slice = createSlice({}, () => ({ loaded: false }));
+      const slice = createSlice({ actions: {} }, () => ({ loaded: false }));
 
       const useFakeFetch = () => {
         const [loaded, setState] = useState(false);
@@ -162,7 +164,7 @@ describe("useLysSlice", () => {
 
     it("Should ignore next data", async () => {
       const context = createLysContext();
-      const slice = createSlice({}, () => ({ locked: "initial" }));
+      const slice = createSlice({ actions: {} }, () => ({ locked: "initial" }));
       const fetchSpy = jest.fn();
 
       const useFakeFetch = () => {

@@ -9,15 +9,17 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 describe("lys", () => {
   const formSlice = createSlice(
     {
-      async submit({ draft, updateTemporary }) {
-        updateTemporary((draft) => {
-          draft.status.loading = true;
-        });
+      actions: {
+        async submit({ draft, updateTemporary }) {
+          updateTemporary((draft) => {
+            draft.status.loading = true;
+          });
 
-        await wait(1000);
+          await wait(1000);
 
-        draft.status.loading = false;
-        draft.status.submitted = true;
+          draft.status.loading = false;
+          draft.status.submitted = true;
+        },
       },
     },
     () => ({

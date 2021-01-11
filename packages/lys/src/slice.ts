@@ -3,10 +3,9 @@ import { ObjectPatcher, patchObject } from "./patchObject";
 import { DeepReadonly } from "./typeutils";
 
 export type SliceDefinition<State> = {
-  [K: string]:
-    | SliceAction<State>
-    | { [K: string]: SliceComputable<State> }
-    | undefined;
+  actions: {
+    [K: string]: SliceAction<State>;
+  };
   computable?: {
     [K: string]: SliceComputable<State>;
   };
@@ -31,8 +30,10 @@ export type SliceAction<State> = {
 
 export type Slice<State, SDef extends SliceDefinition<any>> = {
   initialStateFactory: () => State;
-  actions: Omit<SDef, "computable">;
-  computable: { [K: string]: SliceComputable<State> };
+  actions: SDef["actions"];
+  computable: SDef["computable"] extends undefined | void
+    ? {}
+    : SDef["computable"];
 };
 
 export type StateOfSlice<T extends Slice<any, any>> = T extends Slice<
@@ -45,7 +46,7 @@ export type StateOfSlice<T extends Slice<any, any>> = T extends Slice<
 export type SliceInstance<S extends Slice<any, any>> = {
   state: { readonly current: StateOfSlice<S> };
   actions: SliceToActions<S>;
-  computables: SliceToSelectors<S>;
+  computables: SliceToComputers<S>;
   dispose: () => void;
 };
 
@@ -63,21 +64,16 @@ export type SliceToActions<S extends Slice<any, any>> = {
   reset(k?: keyof StateOfSlice<S>): void;
 };
 
-export type SliceToSelectors<S extends Slice<any, any>> = {
-  [K in keyof S["computable"]]: S["computable"][K] extends (
-    state: any,
-    ...args: infer R
-  ) => infer Ret
-    ? (...args: R) => Ret
-    : never;
+export type SliceToComputers<S extends Slice<any, any>> = {
+  [K in keyof S["computable"]]: () => ReturnType<S["computable"][K]>;
 };
 
 export const createSlice = <S, VDef extends SliceDefinition<S>>(
   sliceDef: VDef,
   initialStateFactory: () => S
 ): Slice<S, VDef> => {
-  const { computable: selectors = {}, ...actions } = sliceDef;
-  return { initialStateFactory, actions, computable: selectors };
+  const { computable = {} as any, actions } = sliceDef;
+  return { initialStateFactory, actions, computable };
 };
 
 export const instantiateSlice = <S extends Slice<any, any>>(
@@ -142,22 +138,26 @@ export const instantiateSlice = <S extends Slice<any, any>>(
   };
 
   const proxyComputables: any = {};
+  const computedCache = new Map();
   let latestState: any = null;
-  const selectorCache = new Map();
   Object.keys(slice.computable ?? {}).forEach((key) => {
-    proxyComputables[key] = (...args: any) => {
-      if (state.current === latestState) {
-        return selectorCache.get(slice.computable[key]);
-      }
+    Object.defineProperty(proxyComputables, key, {
+      enumerable: true,
+      get: () => {
+        // Check state object change by immer
+        if (state.current === latestState) {
+          return computedCache.get(slice.computable[key]);
+        }
 
-      const result = slice.computable[key](state.current);
-      selectorCache.set(slice.computable[key], result);
-      return result;
-    };
+        const result = slice.computable[key](state.current);
+        computedCache.set(slice.computable[key], result);
+        return result;
+      },
+    });
   });
 
   const dispose = () => {
-    selectorCache.clear();
+    computedCache.clear();
     latestState = null;
   };
 

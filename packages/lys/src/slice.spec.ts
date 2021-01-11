@@ -11,13 +11,14 @@ describe("slice", () => {
 
   const slice = createSlice(
     {
-      async submit({ draft, updateTemporary }) {
-        updateTemporary({ submitting: true });
-        await wait(1000);
-        draft.submitting = false;
+      actions: {
+        async submit({ draft, updateTemporary }) {
+          updateTemporary({ submitting: true });
+          await wait(1000);
+          draft.submitting = false;
+        },
       },
       computable: {
-        userName: (state) => state.form.name,
         isEditable: (s) => !s.submitting,
       },
     },
@@ -70,8 +71,11 @@ describe("slice", () => {
 
   describe("selector", () => {
     it("should select value", () => {
-      const { state, actions, computables } = instantiateSlice(slice);
-      expect(computables.isEditable()).toBe(true);
+      const { actions, computables } = instantiateSlice(slice);
+      expect(computables.isEditable).toBe(true);
+
+      actions.set({ submitting: true });
+      expect(computables.isEditable).toBe(false);
     });
   });
 
