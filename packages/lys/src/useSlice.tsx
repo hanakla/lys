@@ -97,13 +97,19 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
     rerender();
   }, []);
 
+  // Observe update only in root (for reduce re-rendering)
   useIsomorphicLayoutEffect(() => {
-    // Observe update only in root
     if (!isRoot) return;
 
     lysContext.observeSliceUpdate(slice, checkAndRerender);
     return () => lysContext.unobserveSliceUpdate(slice);
   }, [slice]);
+
+  // Unset slice instance when root is unmounted
+  useIsomorphicLayoutEffect(() => {
+    if (!isRoot) return;
+    return () => lysContext.unsetSliceInstance(slice);
+  }, []);
 
   useIsomorphicLayoutEffect(() => {
     if (initialStateLoaded.current || initialState == null) {
