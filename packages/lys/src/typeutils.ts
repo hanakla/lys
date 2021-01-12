@@ -18,5 +18,3 @@ export type DeepReadonly<T> =
   : T extends Map<infer K, infer V> ? ReadonlyMap<K, V>
   : T extends Set<infer V> ? ReadonlySet<V>
   : { readonly [K in keyof T]: DeepReadonly<T[K]> }
-
-type A = DeepReadonly<[1, 2, 3]>;
