@@ -49,12 +49,13 @@ export type SliceInstance<S extends Slice<any, any>> = {
   dispose: () => void;
 };
 
+type ExtraArgs<T> = T extends (_: any, ...args: infer R) => any ? R : never;
+
+// prettier-ignore
 export type SliceToActions<S extends Slice<any, any>> = {
-  [K in keyof S["actions"]]: S["actions"][K] extends (
-    draft: any,
-    ...args: infer R
-  ) => void | Promise<void>
-    ? (...args: R) => void | Promise<void>
+  [K in keyof S["actions"]]:
+    ReturnType<S["actions"][K]> extends void | undefined ? (...args: ExtraArgs<S['actions'][K]>) => void
+    : ReturnType<S["actions"][K]> extends Promise<any> ? (...args: ExtraArgs<S['actions'][K]>) => Promise<void>
     : never;
 } & {
   /** @param applier Shallow merging object or modifier function */
@@ -151,7 +152,7 @@ export const instantiateSlice = <S extends Slice<any, any>>(
 
   Object.keys(slice.computables ?? {}).forEach((key) => {
     computableProperties[key] = {
-      enumerable: false,
+      enumerable: true,
       configurable: false,
       get: () => {
         // Check state object change by immer

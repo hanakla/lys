@@ -87,6 +87,29 @@ describe("slice", () => {
       expect(state.current.itemOf(0)).toBe(0);
       expect(state.current.itemOf(1)).toBe(1);
     });
+
+    it("should referenceable computed in action", () => {
+      let sampledState: any = null;
+
+      const { actions } = instantiateSlice(
+        createSlice(
+          {
+            actions: {
+              sample: ({ draft }) => {
+                sampledState = { ...draft };
+              },
+            },
+            computed: {
+              computedValue: () => true,
+            },
+          },
+          () => ({})
+        )
+      );
+
+      actions.sample();
+      expect(sampledState).toMatchObject({ computedValue: true });
+    });
   });
 
   describe("changeImmediate", () => {
