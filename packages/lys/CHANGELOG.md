@@ -1,4 +1,4 @@
-## 0.1.3
+## 1.0.3
 
 - [#2](https://github.com/fleur-js/lys/pull/2) Fix slice instance will remaining after root component unmount
 - [#2](https://github.com/fleur-js/lys/pull/2) Remove unused peer dependency (react-dom)
