@@ -7,6 +7,7 @@ describe("slice", () => {
   interface State {
     submitting: boolean;
     form: { name: string };
+    items: number[];
   }
 
   const slice = createSlice(
@@ -20,9 +21,10 @@ describe("slice", () => {
       },
       computed: {
         isEditable: (s) => !s.submitting,
+        itemOf: (s) => (index: number) => s.items[index],
       },
     },
-    (): State => ({ submitting: false, form: { name: "" } })
+    (): State => ({ submitting: false, form: { name: "" }, items: [] })
   );
 
   beforeEach(() => {
@@ -76,6 +78,14 @@ describe("slice", () => {
 
       actions.set({ submitting: true });
       expect(state.current.isEditable).toBe(false);
+    });
+
+    it("should not cache lambda result", () => {
+      const { state, actions } = instantiateSlice(slice);
+      actions.set({ items: [0, 1] });
+
+      expect(state.current.itemOf(0)).toBe(0);
+      expect(state.current.itemOf(1)).toBe(1);
     });
   });
 
