@@ -28,7 +28,7 @@ describe("useLysSlice", () => {
             draft.count++;
           },
         },
-        computable: {
+        computed: {
           isZero: (state) => state.count === 0,
         },
       },

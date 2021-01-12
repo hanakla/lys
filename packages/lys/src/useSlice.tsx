@@ -124,7 +124,7 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
   }, [initialState]);
 
   const returnedState = useMemo(
-    () => ({ ...instance.state.current, ...instance.computables }),
+    () => ({ ...instance.state.current, ...instance.computed }),
     [instance.state.current]
   );
 
@@ -134,7 +134,7 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
 
 export const useLysSliceRoot = <S extends Slice<any, any>>(
   slice: S,
-  initialState?: ObjectPatcher<Draft<StateOfSlice<S>>>
+  initialState?: ObjectPatcher<Draft<StateOfSlice<S>>> | null
 ) => {
   return useLysSliceInternal(slice, initialState, { isRoot: true });
 };

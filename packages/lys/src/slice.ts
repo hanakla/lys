@@ -6,7 +6,7 @@ export type SliceDefinition<State> = {
   actions: {
     [K: string]: SliceAction<State>;
   };
-  computable?: {
+  computed?: {
     [K: string]: SliceComputable<State>;
   };
 };
@@ -31,9 +31,9 @@ export type SliceAction<State> = {
 export type Slice<State, SDef extends SliceDefinition<any>> = {
   initialStateFactory: () => State;
   actions: SDef["actions"];
-  computable: SDef["computable"] extends undefined | void
+  computables: SDef["computed"] extends undefined | void
     ? {}
-    : SDef["computable"];
+    : SDef["computed"];
 };
 
 export type StateOfSlice<T extends Slice<any, any>> = T extends Slice<
@@ -46,7 +46,7 @@ export type StateOfSlice<T extends Slice<any, any>> = T extends Slice<
 export type SliceInstance<S extends Slice<any, any>> = {
   state: { readonly current: StateOfSlice<S> };
   actions: SliceToActions<S>;
-  computables: SliceToComputers<S>;
+  computed: SliceToComputers<S>;
   dispose: () => void;
 };
 
@@ -65,15 +65,15 @@ export type SliceToActions<S extends Slice<any, any>> = {
 };
 
 export type SliceToComputers<S extends Slice<any, any>> = {
-  [K in keyof S["computable"]]: () => ReturnType<S["computable"][K]>;
+  [K in keyof S["computables"]]: () => ReturnType<S["computables"][K]>;
 };
 
 export const createSlice = <S, VDef extends SliceDefinition<S>>(
   sliceDef: VDef,
   initialStateFactory: () => S
 ): Slice<S, VDef> => {
-  const { computable = {} as any, actions } = sliceDef;
-  return { initialStateFactory, actions, computable };
+  const { computed = {} as any, actions } = sliceDef;
+  return { initialStateFactory, actions, computables: computed };
 };
 
 export const instantiateSlice = <S extends Slice<any, any>>(
@@ -140,17 +140,17 @@ export const instantiateSlice = <S extends Slice<any, any>>(
   const proxyComputables: any = {};
   const computedCache = new Map();
   let latestState: any = null;
-  Object.keys(slice.computable ?? {}).forEach((key) => {
+  Object.keys(slice.computables ?? {}).forEach((key) => {
     Object.defineProperty(proxyComputables, key, {
       enumerable: true,
       get: () => {
         // Check state object change by immer
         if (state.current === latestState) {
-          return computedCache.get(slice.computable[key]);
+          return computedCache.get(slice.computables[key]);
         }
 
-        const result = slice.computable[key](state.current);
-        computedCache.set(slice.computable[key], result);
+        const result = slice.computables[key](state.current);
+        computedCache.set(slice.computables[key], result);
         return result;
       },
     });
@@ -164,7 +164,7 @@ export const instantiateSlice = <S extends Slice<any, any>>(
   return {
     state,
     actions: proxyActions,
-    computables: proxyComputables,
+    computed: proxyComputables,
     dispose,
   };
 };

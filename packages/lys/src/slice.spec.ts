@@ -18,7 +18,7 @@ describe("slice", () => {
           draft.submitting = false;
         },
       },
-      computable: {
+      computed: {
         isEditable: (s) => !s.submitting,
       },
     },
@@ -71,11 +71,11 @@ describe("slice", () => {
 
   describe("selector", () => {
     it("should select value", () => {
-      const { actions, computables } = instantiateSlice(slice);
-      expect(computables.isEditable).toBe(true);
+      const { actions, computed } = instantiateSlice(slice);
+      expect(computed.isEditable).toBe(true);
 
       actions.set({ submitting: true });
-      expect(computables.isEditable).toBe(false);
+      expect(computed.isEditable).toBe(false);
     });
   });
 
