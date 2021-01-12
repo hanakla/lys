@@ -151,7 +151,7 @@ describe("useLysSlice", () => {
         </App>
       );
 
-      expect(JSON.parse(result.container.textContent).loaded).toBe(false);
+      expect(JSON.parse(result.container.textContent!).loaded).toBe(false);
 
       await act(async () => {
         const waiter = new Promise<void>((r) => setTimeout(r, 1000));
@@ -159,7 +159,7 @@ describe("useLysSlice", () => {
         await waiter;
       });
 
-      expect(JSON.parse(result.container.textContent).loaded).toBe(true);
+      expect(JSON.parse(result.container.textContent!).loaded).toBe(true);
     });
 
     it("Should ignore next data", async () => {
@@ -196,7 +196,7 @@ describe("useLysSlice", () => {
         </App>
       );
 
-      expect(JSON.parse(result.container.textContent).locked).toBe("locked!");
+      expect(JSON.parse(result.container.textContent!).locked).toBe("locked!");
 
       await act(async () => {
         const waiter = new Promise<void>((r) => setTimeout(r, 1000));
@@ -205,7 +205,7 @@ describe("useLysSlice", () => {
       });
 
       expect(fetchSpy).toBeCalled();
-      expect(JSON.parse(result.container.textContent).locked).toBe("locked!");
+      expect(JSON.parse(result.container.textContent!).locked).toBe("locked!");
     });
   });
 });
