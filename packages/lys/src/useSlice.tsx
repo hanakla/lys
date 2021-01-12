@@ -108,7 +108,10 @@ const useLysSliceInternal = <S extends Slice<any, any>>(
   // Unset slice instance when root is unmounted
   useIsomorphicLayoutEffect(() => {
     if (!isRoot) return;
-    return () => lysContext.unsetSliceInstance(slice);
+    return () => {
+      instance.dispose();
+      lysContext.unsetSliceInstance(slice);
+    };
   }, []);
 
   useIsomorphicLayoutEffect(() => {
