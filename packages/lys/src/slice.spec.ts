@@ -69,13 +69,13 @@ describe("slice", () => {
     });
   });
 
-  describe("selector", () => {
+  describe("computed", () => {
     it("should select value", () => {
-      const { actions, computed } = instantiateSlice(slice);
-      expect(computed.isEditable).toBe(true);
+      const { state, actions } = instantiateSlice(slice);
+      expect(state.current.isEditable).toBe(true);
 
       actions.set({ submitting: true });
-      expect(computed.isEditable).toBe(false);
+      expect(state.current.isEditable).toBe(false);
     });
   });
 
