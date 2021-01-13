@@ -1,7 +1,6 @@
 import { createDraft, Draft, finishDraft } from "immer";
 import { ObjectPatcher, patchObject } from "./patchObject";
 import { DeepReadonly } from "./typeutils";
-import { shallowEqual } from "./utils";
 
 export type SliceDefinition<State> = {
   actions: {
@@ -24,8 +23,6 @@ export type SliceAction<State> = {
        * Update state and emit changes temporary.
        */
       updateTemporary: (patcher: ObjectPatcher<Draft<State>>) => void;
-      /** It is recommended that the conditional branch does not change whether or not it is executed. */
-      unstable_execAction: ExecAction<State>;
     },
     ...args: any[]
   ): void | Promise<void>;
@@ -52,20 +49,13 @@ export type SliceInstance<S extends Slice<any, any>> = {
   dispose: () => void;
 };
 
-type ExtraActionArgs<T> = T extends (_: any, ...args: infer R) => any
-  ? R
-  : never;
-
-type ExecAction<State> = <A extends SliceAction<State>>(
-  action: A,
-  ...args: ExtraActionArgs<A>
-) => Promise<void>;
+type ExtraArgs<T> = T extends (_: any, ...args: infer R) => any ? R : never;
 
 // prettier-ignore
 export type SliceToActions<S extends Slice<any, any>> = {
   [K in keyof S["actions"]]:
-    ReturnType<S["actions"][K]> extends void | undefined ? (...args: ExtraActionArgs<S['actions'][K]>) => void
-    : ReturnType<S["actions"][K]> extends Promise<any> ? (...args: ExtraActionArgs<S['actions'][K]>) => Promise<void>
+    ReturnType<S["actions"][K]> extends void | undefined ? (...args: ExtraArgs<S['actions'][K]>) => void
+    : ReturnType<S["actions"][K]> extends Promise<any> ? (...args: ExtraArgs<S['actions'][K]>) => Promise<void>
     : never;
 } & {
   /** @param applier Shallow merging object or modifier function */
@@ -85,10 +75,6 @@ export const createSlice = <S, VDef extends SliceDefinition<S>>(
   const { computed = {} as any, actions } = sliceDef;
   return { initialStateFactory, actions, computables: computed };
 };
-
-class ActionSuspended {
-  constructor(public action: SliceAction<any>, public args: any[]) {}
-}
 
 export const instantiateSlice = <S extends Slice<any, any>>(
   slice: S,
@@ -116,84 +102,35 @@ export const instantiateSlice = <S extends Slice<any, any>>(
       { ...nextState }, // Strip computed properties
       computableProperties
     );
-  };
-
-  const internalExecAction = async (
-    action: SliceAction<any>,
-    args: any[],
-    emitChange: boolean
-  ) => {
-    let nestedExecuted: Array<[SliceAction<any>, any[]]> = [];
-    let executeIndex = -1;
-
-    const nestedExecAction: ExecAction<StateOfSlice<S>> = async (
-      action,
-      ...args
-    ) => {
-      executeIndex++;
-      const currentExecute = nestedExecuted[executeIndex];
-
-      if (
-        currentExecute?.[0] === action &&
-        shallowEqual(currentExecute?.[1], args)
-      ) {
-        return;
-      }
-
-      nestedExecuted[executeIndex] = [action, args];
-      throw new ActionSuspended(action, args);
-    };
-
-    while (true) {
-      const base = state.current;
-      const draft = createDraft(base);
-
-      const updateTemporary = (
-        patcher: ObjectPatcher<Draft<StateOfSlice<any>>>
-      ) => {
-        const tmpDraft = createDraft(base);
-        patchObject(tmpDraft, patcher);
-
-        // Won't do this. When use destructive assignment by draft
-        // destructed property is not update and desync from base draft, it makes confusing
-        // // patchObject(draft, patcher);
-
-        const nextState = finishDraft(tmpDraft);
-        updateState(nextState);
-        emitChange && changed?.(nextState);
-      };
-
-      try {
-        executeIndex = -1;
-
-        const result = action(
-          { draft, updateTemporary, unstable_execAction: nestedExecAction },
-          ...args
-        );
-
-        if (result instanceof Promise) {
-          await result;
-        }
-
-        const nextState = finishDraft(draft);
-        updateState(nextState);
-        emitChange && changed?.(nextState);
-
-        break;
-      } catch (e) {
-        finishDraft(draft);
-
-        if (e instanceof ActionSuspended) {
-          await internalExecAction(e.action, e.args, false);
-        } else {
-          throw e;
-        }
-      }
-    }
+    changed?.(nextState);
   };
 
   const execAction = async (action: SliceAction<any>, ...args: any[]) => {
-    await internalExecAction(action, args, true);
+    const base = state.current;
+    const draft = createDraft(base);
+
+    const updateTemporary = (
+      patcher: ObjectPatcher<Draft<StateOfSlice<any>>>
+    ) => {
+      const tmpDraft = createDraft(base);
+      patchObject(tmpDraft, patcher);
+
+      // Won't do this. When use destructive assignment by draft
+      // destructed property is not update and desync from base draft, it makes confusing
+      // // patchObject(draft, patcher);
+
+      const nextState = finishDraft(tmpDraft);
+      updateState(nextState);
+    };
+
+    const result = action({ draft, updateTemporary }, ...args);
+
+    if (result instanceof Promise) {
+      await result;
+    }
+
+    const nextState = finishDraft(draft);
+    updateState(nextState);
   };
 
   const proxyActions: any = {};
