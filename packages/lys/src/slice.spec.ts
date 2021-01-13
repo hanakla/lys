@@ -126,4 +126,34 @@ describe("slice", () => {
       expect(state.current.submitting).toBe(false);
     });
   });
+
+  describe.only("nested action", () => {
+    it("works?", async () => {
+      const slice = createSlice(
+        {
+          actions: {
+            sample: async ({ draft, unstable_execAction }) => {
+              await unstable_execAction(slice.actions.increment, 1);
+              await unstable_execAction(slice.actions.increment, 2);
+              await unstable_execAction(slice.actions.increment, 3);
+
+              draft.sampledCount = draft.count;
+            },
+            increment: ({ draft }, amount: number) => {
+              draft.count += amount;
+            },
+          },
+        },
+        () => ({ count: 0, sampledCount: null as number | null })
+      );
+
+      const { state, actions } = instantiateSlice(slice);
+
+      expect(state.current.sampledCount).toBe(null);
+      console.time("Run");
+      await actions.sample();
+      console.timeEnd("Run");
+      expect(state.current.sampledCount).toBe(6);
+    });
+  });
 });
