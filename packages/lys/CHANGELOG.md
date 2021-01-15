@@ -1,5 +1,22 @@
 ## 2.0.0
 
+- Breaking: `createSlice` interface was changed
+  ```ts
+  // After 2.0.0
+  createSlice({
+    actions: {
+      someAction: (...) => { ... },
+    },
+    computed: {
+      ok: state => state.***,
+    }
+  }, () => ({ /* initial state */}))
+
+  // Before 2.0.0
+  createSlice({
+    someAction: (...) => { ... },
+  }, () => ({ /* initial state */}))
+  ```
 - [#3](https://github.com/fleur-js/lys/pull/3) Introduce `computed` property
 - [#4](https://github.com/fleur-js/lys/pull/4) Add `mockSlice` function for testing
 
