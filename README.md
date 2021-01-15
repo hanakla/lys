@@ -174,5 +174,17 @@ describe('Testing slice', () => {
     expect(state.current.count).toBe(1)
     expect(state.current.isZero).toBe(false)
   })
+
+  it('mock slice actions (for component testing)', () => {
+    const actionSpy = jest.fn(({ draft }) => draft.count = 10)
+
+    const { state, actions } = mockSlice(slice, { /* part of initial state here */ }, {
+      /* Mock action implementations here */
+      increment: actionSpy
+    })
+
+    actions.increment()
+    expect(actionSpy).toBeCalled()
+  })
 })
 ```
