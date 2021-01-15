@@ -1,6 +1,7 @@
 ## 2.0.0
 
-- [#3](https://github.com/fleur-js/lys/pull/3/files) Introduce `computed` property
+- [#3](https://github.com/fleur-js/lys/pull/3) Introduce `computed` property
+- [#4](https://github.com/fleur-js/lys/pull/4) Add `mockSlice` function for testing
 
 ## 1.0.3
 
