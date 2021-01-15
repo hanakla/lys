@@ -23,8 +23,13 @@ describe("useLysSlice", () => {
   it("Basic usage: Should intialize, action, action to update state", async () => {
     const slice = createSlice(
       {
-        increment({ draft }) {
-          draft.count++;
+        actions: {
+          increment({ draft }) {
+            draft.count++;
+          },
+        },
+        computed: {
+          isZero: (state) => state.count === 0,
         },
       },
       () => ({ count: 0 })
@@ -47,7 +52,9 @@ describe("useLysSlice", () => {
 
       return (
         <div>
-          <div>Root: {state.count}</div>
+          <div>
+            Root: {state.count}(isZero: {state.isZero.toString()})
+          </div>
           <SubComponent ref={subRef} />
         </div>
       );
@@ -77,7 +84,7 @@ describe("useLysSlice", () => {
 
     // Initial State
     expect(result.container.innerHTML).toMatchInlineSnapshot(
-      `"<div><div>Root: 0</div><div>Sub: 0</div></div>"`
+      `"<div><div>Root: 0(isZero: true)</div><div>Sub: 0</div></div>"`
     );
 
     // First update
@@ -88,7 +95,7 @@ describe("useLysSlice", () => {
 
     result.rerender(element);
     expect(result.container.innerHTML).toMatchInlineSnapshot(
-      `"<div><div>Root: 1</div><div>Sub: 1</div></div>"`
+      `"<div><div>Root: 1(isZero: false)</div><div>Sub: 1</div></div>"`
     );
 
     // Second update
@@ -100,7 +107,7 @@ describe("useLysSlice", () => {
 
     result.rerender(element);
     expect(result.container.innerHTML).toMatchInlineSnapshot(
-      `"<div><div>Root: 2</div><div>Sub: 2</div></div>"`
+      `"<div><div>Root: 2(isZero: false)</div><div>Sub: 2</div></div>"`
     );
 
     // Third update by SubComponent
@@ -112,14 +119,14 @@ describe("useLysSlice", () => {
 
     result.rerender(element);
     expect(result.container.innerHTML).toMatchInlineSnapshot(
-      `"<div><div>Root: 3</div><div>Sub: 3</div></div>"`
+      `"<div><div>Root: 3(isZero: false)</div><div>Sub: 3</div></div>"`
     );
   });
 
   describe("With async data fetch", () => {
     it("Should accept fetched data", async () => {
       const context = createLysContext();
-      const slice = createSlice({}, () => ({ loaded: false }));
+      const slice = createSlice({ actions: {} }, () => ({ loaded: false }));
 
       const useFakeFetch = () => {
         const [loaded, setState] = useState(false);
@@ -144,7 +151,7 @@ describe("useLysSlice", () => {
         </App>
       );
 
-      expect(JSON.parse(result.container.textContent).loaded).toBe(false);
+      expect(JSON.parse(result.container.textContent!).loaded).toBe(false);
 
       await act(async () => {
         const waiter = new Promise<void>((r) => setTimeout(r, 1000));
@@ -152,12 +159,12 @@ describe("useLysSlice", () => {
         await waiter;
       });
 
-      expect(JSON.parse(result.container.textContent).loaded).toBe(true);
+      expect(JSON.parse(result.container.textContent!).loaded).toBe(true);
     });
 
     it("Should ignore next data", async () => {
       const context = createLysContext();
-      const slice = createSlice({}, () => ({ locked: "initial" }));
+      const slice = createSlice({ actions: {} }, () => ({ locked: "initial" }));
       const fetchSpy = jest.fn();
 
       const useFakeFetch = () => {
@@ -189,7 +196,7 @@ describe("useLysSlice", () => {
         </App>
       );
 
-      expect(JSON.parse(result.container.textContent).locked).toBe("locked!");
+      expect(JSON.parse(result.container.textContent!).locked).toBe("locked!");
 
       await act(async () => {
         const waiter = new Promise<void>((r) => setTimeout(r, 1000));
@@ -198,7 +205,7 @@ describe("useLysSlice", () => {
       });
 
       expect(fetchSpy).toBeCalled();
-      expect(JSON.parse(result.container.textContent).locked).toBe("locked!");
+      expect(JSON.parse(result.container.textContent!).locked).toBe("locked!");
     });
   });
 });

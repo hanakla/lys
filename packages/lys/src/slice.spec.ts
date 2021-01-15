@@ -7,17 +7,24 @@ describe("slice", () => {
   interface State {
     submitting: boolean;
     form: { name: string };
+    items: number[];
   }
 
   const slice = createSlice(
     {
-      async submit({ draft, updateTemporary }) {
-        updateTemporary({ submitting: true });
-        await wait(1000);
-        draft.submitting = false;
+      actions: {
+        async submit({ draft, updateTemporary }) {
+          updateTemporary({ submitting: true });
+          await wait(1000);
+          draft.submitting = false;
+        },
+      },
+      computed: {
+        isEditable: (s) => !s.submitting,
+        itemOf: (s) => (index: number) => s.items[index],
       },
     },
-    (): State => ({ submitting: false, form: { name: "" } })
+    (): State => ({ submitting: false, form: { name: "" }, items: [] })
   );
 
   beforeEach(() => {
@@ -61,6 +68,47 @@ describe("slice", () => {
         expect(state.current.submitting).toBe(false);
         expect(state.current.form.name).toBe("aaa"); // Expect not to change
       });
+    });
+  });
+
+  describe("computed", () => {
+    it("should select value", () => {
+      const { state, actions } = instantiateSlice(slice);
+      expect(state.current.isEditable).toBe(true);
+
+      actions.set({ submitting: true });
+      expect(state.current.isEditable).toBe(false);
+    });
+
+    it("should not cache lambda result", () => {
+      const { state, actions } = instantiateSlice(slice);
+      actions.set({ items: [0, 1] });
+
+      expect(state.current.itemOf(0)).toBe(0);
+      expect(state.current.itemOf(1)).toBe(1);
+    });
+
+    it("should referenceable computed in action", () => {
+      let sampledState: any = null;
+
+      const { actions } = instantiateSlice(
+        createSlice(
+          {
+            actions: {
+              sample: ({ draft }) => {
+                sampledState = { ...draft };
+              },
+            },
+            computed: {
+              computedValue: () => true,
+            },
+          },
+          () => ({})
+        )
+      );
+
+      actions.sample();
+      expect(sampledState).toMatchObject({ computedValue: true });
     });
   });
 

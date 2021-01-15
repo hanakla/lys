@@ -1,3 +1,7 @@
+## 2.0.0
+
+- [#3](https://github.com/fleur-js/lys/pull/3/files) Introduce `computed` property
+
 ## 1.0.3
 
 - [#2](https://github.com/fleur-js/lys/pull/2) Fix slice instance will remaining after root component unmount
