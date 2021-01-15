@@ -15,17 +15,16 @@ export type SliceComputable<State> = {
   (state: DeepReadonly<State>): any;
 };
 
+export type SliceActionContext<State> = {
+  draft: Draft<State>;
+  /**
+   * Update state and emit changes temporary.
+   */
+  updateTemporary: (patcher: ObjectPatcher<Draft<State>>) => void;
+};
+
 export type SliceAction<State> = {
-  (
-    context: {
-      draft: Draft<State>;
-      /**
-       * Update state and emit changes temporary.
-       */
-      updateTemporary: (patcher: ObjectPatcher<Draft<State>>) => void;
-    },
-    ...args: any[]
-  ): void | Promise<void>;
+  (context: SliceActionContext<State>, ...args: any[]): void | Promise<void>;
 };
 
 export type Slice<State, SDef extends SliceDefinition<any>> = {
