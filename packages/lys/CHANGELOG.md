@@ -1,3 +1,7 @@
+## 2.0.1
+
+- Fix README
+
 ## 2.0.0
 
 - Breaking: `createSlice` interface was changed
