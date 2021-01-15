@@ -46,9 +46,10 @@ const formSlice = createSlice({
       // On after complete this action, reset to action result draft.
       updateTemporary({ submitting: true })
 
-      draft.form = await (
-        await fetch('/api/users', { method: 'POST', body: JSON.stringify(draft.form) })
-      ).json()
+      draft.form = await (await fetch('/api/users', { 
+        method: 'POST',
+        body: JSON.stringify(draft.form)
+      })).json()
     },
     async validate({ draft }) {
       const { form } = draft
@@ -60,7 +61,7 @@ const formSlice = createSlice({
   },
   computed: {
     // You can define computable values in `computed`
-    // `computed` is cached between to next state changed (lambda is not cached)
+    // `computed` is cached between to next state changed
     itemOf: (state) => (index: number) => state.form.items[index],
     canSubmit: (state) => !state.submitting
   }
