@@ -1,8 +1,18 @@
 import { createDraft, Draft, finishDraft } from "immer";
 import { ObjectPatcher, patchObject } from "./patchObject";
+import { DeepReadonly } from "./typeutils";
 
 export type SliceDefinition<State> = {
-  [K: string]: SliceAction<State>;
+  actions: {
+    [K: string]: SliceAction<State>;
+  };
+  computed?: {
+    [K: string]: SliceComputable<State>;
+  };
+};
+
+export type SliceComputable<State> = {
+  (state: DeepReadonly<State>): any;
 };
 
 export type SliceAction<State> = {
@@ -18,9 +28,12 @@ export type SliceAction<State> = {
   ): void | Promise<void>;
 };
 
-export type Slice<State, Def extends SliceDefinition<any>> = {
+export type Slice<State, SDef extends SliceDefinition<any>> = {
   initialStateFactory: () => State;
-  actions: Def;
+  actions: SDef["actions"];
+  computables: SDef["computed"] extends undefined | void
+    ? {}
+    : SDef["computed"];
 };
 
 export type StateOfSlice<T extends Slice<any, any>> = T extends Slice<
@@ -31,16 +44,18 @@ export type StateOfSlice<T extends Slice<any, any>> = T extends Slice<
   : never;
 
 export type SliceInstance<S extends Slice<any, any>> = {
-  state: { readonly current: StateOfSlice<S> };
+  state: { readonly current: StateOfSlice<S> & SliceToComputeds<S> };
   actions: SliceToActions<S>;
+  dispose: () => void;
 };
 
+type ExtraArgs<T> = T extends (_: any, ...args: infer R) => any ? R : never;
+
+// prettier-ignore
 export type SliceToActions<S extends Slice<any, any>> = {
-  [K in keyof S["actions"]]: S["actions"][K] extends (
-    draft: any,
-    ...args: infer R
-  ) => void | Promise<void>
-    ? (...args: R) => void | Promise<void>
+  [K in keyof S["actions"]]:
+    ReturnType<S["actions"][K]> extends void | undefined ? (...args: ExtraArgs<S['actions'][K]>) => void
+    : ReturnType<S["actions"][K]> extends Promise<any> ? (...args: ExtraArgs<S['actions'][K]>) => Promise<void>
     : never;
 } & {
   /** @param applier Shallow merging object or modifier function */
@@ -49,11 +64,16 @@ export type SliceToActions<S extends Slice<any, any>> = {
   reset(k?: keyof StateOfSlice<S>): void;
 };
 
+export type SliceToComputeds<S extends Slice<any, any>> = {
+  [K in keyof S["computables"]]: ReturnType<S["computables"][K]>;
+};
+
 export const createSlice = <S, VDef extends SliceDefinition<S>>(
-  actions: VDef,
+  sliceDef: VDef,
   initialStateFactory: () => S
 ): Slice<S, VDef> => {
-  return { initialStateFactory, actions };
+  const { computed = {} as any, actions } = sliceDef;
+  return { initialStateFactory, actions, computables: computed };
 };
 
 export const instantiateSlice = <S extends Slice<any, any>>(
@@ -68,6 +88,21 @@ export const instantiateSlice = <S extends Slice<any, any>>(
 
   const state = {
     current: initial,
+  };
+
+  const computedResultCache = new Map();
+  let latestReferencedState: any = null;
+  const computableProperties: Record<
+    string,
+    PropertyDescriptor
+  > = Object.create(null);
+
+  const updateState = (nextState: StateOfSlice<S>) => {
+    state.current = Object.defineProperties(
+      { ...nextState }, // Strip computed properties
+      computableProperties
+    );
+    changed?.(nextState);
   };
 
   const execAction = async (action: SliceAction<any>, ...args: any[]) => {
@@ -85,8 +120,7 @@ export const instantiateSlice = <S extends Slice<any, any>>(
       // // patchObject(draft, patcher);
 
       const nextState = finishDraft(tmpDraft);
-      state.current = nextState;
-      changed?.(nextState);
+      updateState(nextState);
     };
 
     const result = action({ draft, updateTemporary }, ...args);
@@ -96,8 +130,7 @@ export const instantiateSlice = <S extends Slice<any, any>>(
     }
 
     const nextState = finishDraft(draft);
-    state.current = nextState;
-    changed?.(nextState);
+    updateState(nextState);
   };
 
   const proxyActions: any = {};
@@ -117,5 +150,33 @@ export const instantiateSlice = <S extends Slice<any, any>>(
     });
   };
 
-  return { state, actions: proxyActions };
+  Object.keys(slice.computables ?? {}).forEach((key) => {
+    computableProperties[key] = {
+      enumerable: true,
+      configurable: false,
+      get: () => {
+        // Check state object change by immer
+        if (state.current === latestReferencedState) {
+          return computedResultCache.get(slice.computables[key]);
+        }
+
+        const result = slice.computables[key](state.current);
+        computedResultCache.set(slice.computables[key], result);
+        return result;
+      },
+    };
+  });
+
+  const dispose = () => {
+    computedResultCache.clear();
+    latestReferencedState = null;
+  };
+
+  state.current = Object.defineProperties(state.current, computableProperties);
+
+  return {
+    state,
+    actions: proxyActions,
+    dispose,
+  };
 };
