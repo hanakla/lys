@@ -7,7 +7,9 @@
 [bundlephobia-url]: https://bundlephobia.com/result?p=@fleur/lys@2.0.1
 [bundlephobia-image]: https://img.shields.io/bundlephobia/minzip/@fleur/lys?style=flat-square
 
-# Lys ![CI][ci-image-url] [![latest][version-image-url]][npm-url] [![BundleSize][bundlephobia-image]][bundlephobia-url] [![License][license-image]][license-url] [![npm][downloads-image]][npm-url]
+![CI][ci-image-url] [![latest][version-image-url]][npm-url] [![BundleSize][bundlephobia-image]][bundlephobia-url] [![License][license-image]][license-url] [![npm][downloads-image]][npm-url]
+
+# Lys 
 Lys (risu) is an minimal statement manger for '21s React.
 
 
