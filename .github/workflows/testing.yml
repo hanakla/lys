@@ -3,13 +3,13 @@ name: CI
 on: [push]
 
 jobs:
-  testing:
-    runs-on: ${{ matrix.os }}
-
+  setup:
     strategy:
       matrix:
         os: [ubuntu-latest]
         node-version: [10.x, 12.x, 14.x, 15.x]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v2
@@ -30,8 +30,45 @@ jobs:
       - name: Install deps
         run: yarn install
 
+  building:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [10.x, 12.x, 14.x, 15.x]
+
+    runs-on: ${{ matrix.os }}
+
+    needs: setup
+    steps:
+      - name: Build package
+        run: yarn prepublishOnly
+
+  linting:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [10.x, 12.x, 14.x, 15.x]
+
+    runs-on: ${{ matrix.os }}
+    needs: setup
+
+    steps:
+      - name: Linting @fleur/lys
+        run: |
+          cd packages/lys
+          yarn eslint ./src
+
+  testing:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [10.x, 12.x, 14.x, 15.x]
+
+    runs-on: ${{ matrix.os }}
+    needs: setup
+
+    steps:
       - name: Testing @fluer/lys
         run: |
           cd packages/lys
-          yarn prepublishOnly
           yarn test --coverage --verbose
