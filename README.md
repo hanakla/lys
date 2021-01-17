@@ -1,5 +1,15 @@
-# Lys
+[npm-url]: https://www.npmjs.com/package/@fleur/lys
+[ci-image-url]: https://img.shields.io/github/workflow/status/fleur-js/lys/CI?logo=github&style=flat-square
+[version-image-url]: https://img.shields.io/npm/v/@fleur/lys?style=flat-square
+[license-url]: https://opensource.org/licenses/MIT
+[license-image]: https://img.shields.io/npm/l/@fleur/lys.svg?style=flat-square
+[downloads-image]: https://img.shields.io/npm/dw/@fleur/lys.svg?style=flat-square&logo=npm
+[bundlephobia-url]: https://bundlephobia.com/result?p=@fleur/lys@2.0.1
+[bundlephobia-image]: https://img.shields.io/bundlephobia/minzip/@fleur/lys?style=flat-square
+
+# Lys ![CI][ci-image-url] [![latest][version-image-url]][npm-url] [![BundleSize][bundlephobia-image]][bundlephobia-url] [![License][license-image]][license-url] [![npm][downloads-image]][npm-url]
 Lys (risu) is an minimal statement manger for '21s React.
+
 
 It's focus to **Per page state management**, not application global state management.  
 Lys is usable to instead of `useReducer`, `Mobx`, or `Recoil` if you have async procedure.
