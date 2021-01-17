@@ -36,6 +36,7 @@ jobs:
 
   build-lint:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         node-version: [15.x]
