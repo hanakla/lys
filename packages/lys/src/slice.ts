@@ -31,7 +31,7 @@ export type Slice<State, SDef extends SliceDefinition<any>> = {
   initialStateFactory: () => State;
   actions: SDef["actions"];
   computables: SDef["computed"] extends undefined | void
-    ? {}
+    ? {} // eslint-disable-line @typescript-eslint/ban-types
     : SDef["computed"];
 };
 

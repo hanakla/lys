@@ -4,12 +4,11 @@ on: [push]
 
 jobs:
   testing:
-    runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
-        os: [ubuntu-latest]
         node-version: [10.x, 12.x, 14.x, 15.x]
+
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -33,5 +32,45 @@ jobs:
       - name: Testing @fluer/lys
         run: |
           cd packages/lys
-          yarn prepublishOnly
           yarn test --coverage --verbose
+
+  build-lint:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [15.x]
+        steps: [build, lint]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js for use with actions
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Cache
+        uses: actions/cache@v1.0.0
+        with:
+          path: ~/.cache/yarn
+          key: ${{ matrix.os }}-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
+          restore-keys: |
+            ${{ matrix.os }}-
+
+      - name: Install deps
+        run: yarn install
+
+      - name: Build package
+        if: ${{ matrix.steps == 'build' }}
+        run: |
+          cd packages/lys
+          yarn prepublishOnly
+
+      - name: Linting @fleur/lys
+        if: ${{ matrix.steps == 'lint' }}
+        run: |
+          cd packages/lys
+          yarn eslint ./src
